@@ -1,0 +1,41 @@
+{
+  "intents": [
+    {
+      "intent": "AMAZON.CancelIntent"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "Price",
+      "slots": [
+        {
+          "name": "cryptocurrenciesslot",
+          "type": "CRYPTOCURRENCIES"
+        }
+      ]
+    },
+    {
+      "intent": "Vocab",
+      "slots": [
+        {
+          "name": "vocabularyslot",
+          "type": "VOCABULARY"
+        },
+        {
+          "name": "cryptocurrenciesslot",
+          "type": "CRYPTOCURRENCIES"
+        }
+      ]
+    },
+    {
+      "intent": "Howdy"
+    },
+    {
+      "intent": "Whatcanyoudo"
+    }
+  ]
+}
