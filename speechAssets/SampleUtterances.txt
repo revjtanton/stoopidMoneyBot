@@ -1,0 +1,15 @@
+Price	how much is {cryptocurrenciesslot}
+Vocab	explain the {vocabularyslot}
+Vocab	explain {cryptocurrenciesslot}
+Vocab	what is a {vocabularyslot}
+Vocab	what is {cryptocurrenciesslot}
+Vocab	what s a {vocabularyslot}
+Howdy	hello
+Howdy	hi
+Howdy	hi hi hi
+Howdy	how's it going
+Howdy	howdy
+Howdy	hows it goin
+Howdy	what's up
+Howdy	whats up
+Whatcanyoudo	what can you do
