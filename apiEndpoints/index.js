@@ -1,5 +1,6 @@
 'use strict';
 let https = require('https');
+let Contentpull = require('contentpull');
 
 // This is what responds to the user.
 exports.handler = function (event, context, callback) {
@@ -10,12 +11,16 @@ exports.handler = function (event, context, callback) {
 
     // Swaps the intent function called.
     // @todo Kinda hate that its if/else.  Re-thinking this.
-    if (intent == `vocab`) {
+    if (intent == `crypto`) {
         let word = (crypto) ? crypto : vocab;
-        vocabIntent(word,function (res) {
-            callback(null, { "speech": res, "type": 0 });
+        let type = (crypto) ? 'cryptocurrency' : '';
+
+        makeContentfulRequest(word, 'cryptocurrency', function(res) {
+            callback(null, {"speech": res, "type": 0});
         });
-    } else if (intent == `price`) {
+    }
+    
+    if (intent == `price`) {
         let options = {
             host: 'api.coinmarketcap.com',
             path: `/v1/ticker/${crypto}/?convert=${fiat}`
@@ -23,14 +28,12 @@ exports.handler = function (event, context, callback) {
         priceIntent(options, fiat, function (res) {
             callback(null, { "speech": res, "type": 0 });
         });
-    } else {
-        callback(null, { "speech": 'response', "type": 0 });
-    }
+    } 
 };
 
-// This handles the price intent.
+// This handles the price intent and parsing coinmarketcap response
 function priceIntent(options, fiat, callback) {
-    makeRequest(options, function (data, error) {
+    makeApiRequest(options, function (data, error) {
         let price = data[0];
         let val;
 
@@ -62,40 +65,34 @@ function priceIntent(options, fiat, callback) {
     });
 }
 
-// This handles the vocab intent.
-function vocabIntent(word,callback) {
-    let response;
-    
-    // @todo create API from CMS (probably Drupal) to replace this...
-    switch(word) {
-        case `bitcoin`:
-            response = `Bitcoin is a cryptocurrency and first decentralized digital currency. The bitcoin network is peer-to-peer and transactions take place between users directly. These transactions are verified by network nodes through the use of cryptography and recorded in a public distributed ledger called a blockchain.`
-            break;
-        case `cryptocurrency`:
-            response = `Cryptocurrency is a digital asset designed to work as a medium of exchange that uses cryptography to secure its transactions, to control the creation of additional units, and to verify the transfer of assets.`
-            break;
-        case `decentralized`:
-            response = `Decentralized computing is the allocation of resources, both hardware and software, to each individual workstation, or office location.`
-            break;
-        case `blockchain`:
-            response = `A blockchain is a continuously growing list of records, called blocks, which are linked and secured using cryptography. Each block typically contains a cryptographic hash of the previous block, a timestamp and transaction data.`;
-            break;
-        case `coin`:
-            response = `A coin is a digital asset used primarily as a medium of exchange on a blockchain. They are most often issued through mining blocks on the blockchain.`;
-            break;
-        case `token`:
-            response = `A token is a digital asset used primarily as a representation of a security, utility, or commodity, on a blockchain.  They are most often issued via smart contracts on the Ethereum blockchain.`;
-            break;
-
-        default:
-            response = `I'm sorry but I'm not able to explain ${word} yet.  Check back soon and I'll have more information.`;
+// This calls our Contentful API special
+function makeContentfulRequest(word,type,callback) {
+    let spaceid = 'uz41atzkf6i2';
+    let accessToken = '1e66a807ce122915b4490080192085cab43b4cb3af536a9e2e8b0b71e9693ef2';
+    let isPreview = false;
+    let parsers = {
+        Array: function (arr, parser) {
+            delete arr.sys;
+            arr.items.map(item => parser(item));
+        }
+    };
+    let puller = new Contentpull(spaceid, accessToken, {
+        preview: isPreview,
+        parsers: parsers
+    });
+    let query = {
+        name: word
     }
-    
-    callback(response);
+
+    puller.getEntryByType(type,query).parse().then((entry) => {
+        callback(entry.fields.desc);
+    }).catch(function () {
+        callback(`I'm sorry but I can't explain ${word.charAt(0).toUpperCase() + word.slice(1)} yet.  Please check back later.`)
+    });
 }
 
 // Calling external API's.
-function makeRequest(options, callback) {
+function makeApiRequest(options, callback) {
     var request = https.request(options,
         function (response) {
             var responseString = '';
