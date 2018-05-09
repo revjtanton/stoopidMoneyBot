@@ -1,7 +1,6 @@
 'use strict';
 const Alexa = require("alexa-sdk");
 const https = require("https");
-const coinMarketCapApi = `api.coinmarketcap.com`;
 
 exports.handler = function (event, context, callback) {
   const alexa = Alexa.handler(event, context);
@@ -10,7 +9,7 @@ exports.handler = function (event, context, callback) {
 };
 
 const coins = [
-  {name:"Bitcoin",abbrev:'btc'}
+  { name: "Bitcoin", abbrev: 'btc' }
 ];
 
 const handlers = {
@@ -20,7 +19,7 @@ const handlers = {
     this.response.speak(this.attributes.speechOutput).listen(getGenericHelpMessage());
     this.emit(':responseReady');
   },
-  'Vocab': function() {
+  'Vocab': function () {
     var test = this;
     const cryptoSlot = this.event.request.intent.slots.cryptocurrenciesslot;
     let responseWord;
@@ -36,48 +35,48 @@ const handlers = {
     this.emit(':responseReady');
   },
   'Price': function () {
-    const cryptoSlot = this.event.request.intent.slots.cryptocurrenciesslot;
-    let cryptoName;
-    if (cryptoSlot && cryptoSlot.value) {
-      cryptoName = cryptoSlot.value.toLowerCase();
-    }
+    let crypto = this.event.request.intent.slots.cryptocurrenciesslot;
     let fiat = 'USD';
-    var res = '';
-    let options = searchCryptoRequestOptions(cryptoName, fiat);
-    var test = this;
-    
-    makeRequest(options, function( data, error) {
+    let test = this;
+
+    let options = {
+      host: 'api.coinmarketcap.com',
+      path: `/v1/ticker/${crypto}/?convert=${fiat}`
+    };
+
+    makeRequest(options, function (data, error) {
       // console.log(data);
+      let fiat = 'USD';
       let price = data[0];
-      var val = 'Invalid';
+      let val = 'Invalid';
       if (price) {
-          switch(fiat) {
-              case 'EUR':
-                  val = price.price_eur;
-                  break;
-              case 'GBP':
-                  val = price.price_gbp;
-                  break;
-              case 'CAD':
-                  val = price.price_cad;
-                  break;
-              case "NZD":
-                  val = price.price_nzd;
-                  break;
+        switch (fiat) {
+          case 'EUR':
+            val = price.price_eur;
+            break;
+          case 'GBP':
+            val = price.price_gbp;
+            break;
+          case 'CAD':
+            val = price.price_cad;
+            break;
+          case "NZD":
+            val = price.price_nzd;
+            break;
 
-              default:
-                  val = price.price_usd;
-          }
+          default:
+            val = price.price_usd;
+        }
 
-          var denom = ((fiat) ? fiat : 'USD');
-          
-          res = price.name + " is worth " + val + " USD.";
-          test.response.speak(res);
-          test.emit(':responseReady');
+        var denom = ((fiat) ? fiat : 'USD');
+
+        res = price.name + " is worth " + val + " USD.";
+        test.response.speak(res);
+        test.emit(':responseReady');
       }
       else {
-          test.response.speak("There was an error in the Price intent");
-          test.emit(':responseReady');
+        test.response.speak("There was an error in the Price intent");
+        test.emit(':responseReady');
       }
     });
   },
@@ -95,29 +94,21 @@ const handlers = {
   }
 };
 
-// function getGenericHelpMessage(data){
-function getGenericHelpMessage(){
+function getGenericHelpMessage() {
   return "You can ask me about the value of popular cryptocurrencies compared to common fiat currencies.  For example, you can ask How much is Bitcoin in Euros?  So how can I help you?";
 }
 
-function searchCryptoRequestOptions(crypto, fiat = 'USD') {
-  return {
-      host: coinMarketCapApi,
-      path: `/v1/ticker/`+crypto+'/?convert='+fiat
-  };
-}
-
 function makeRequest(options, callback) {
-  var request = https.request(options, 
-  function(response) {
+  var request = https.request(options,
+    function (response) {
       var responseString = '';
-      response.on('data', function(data) {
-          responseString += data;
+      response.on('data', function (data) {
+        responseString += data;
       });
-       response.on('end', function() {
-          var responseJSON = JSON.parse(responseString);
-          callback(responseJSON, null);
+      response.on('end', function () {
+        var responseJSON = JSON.parse(responseString);
+        callback(responseJSON, null);
       });
-  });
+    });
   request.end();
 }
